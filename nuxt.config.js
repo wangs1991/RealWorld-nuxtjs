@@ -55,6 +55,10 @@ module.exports = {
       ])
     }
   },
+  server: {
+    host: '0.0.0.0',
+    port: 80
+  },
   plugins: [
     {src: '~/plugins/request.js', ssr: true},
     {src: '~/plugins/validate.js', ssr: true}
