@@ -5,7 +5,7 @@ on:
       - 'v*'
 jobs:
   build-and-deploy:
-    runs-on: centos8
+    runs-on: ubuntu-latest
     steps:
 
     # 下载源码
