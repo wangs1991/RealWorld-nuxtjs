@@ -20,10 +20,10 @@
             </nuxt-link>
           </li>
           <li class="nav-item">
-            <a class="nav-link ng-binding active" href="#/@velson">
+            <nuxt-link class="nav-link" :to="{ name: 'profile', params:{ name: userData.username } }">
               <img class="user-pic" :src="userData.image" />
               {{ userData.username }}
-            </a>
+            </nuxt-link>
           </li>
         </template>
         <template v-else>

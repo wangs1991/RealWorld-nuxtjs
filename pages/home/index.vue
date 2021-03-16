@@ -12,11 +12,26 @@
         <div class="col-md-9">
           <div class="feed-toggle">
             <ul class="nav nav-pills outline-active">
-              <li class="nav-item">
-                <a class="nav-link disabled" href>Your Feed</a>
+              <li class="nav-item" v-if="userData">
+                <nuxt-link
+                  class="nav-link"
+                  :class="{ active: tab === 'your_feed' }"
+                  :to="{ name: 'home', query: { tab: 'your_feed' } }"
+                >Your Feed</nuxt-link>
               </li>
               <li class="nav-item">
-                <a class="nav-link active" href>Global Feed</a>
+                <nuxt-link
+                  class="nav-link"
+                  :class="{ active: tab === 'global_feed' || tab === '' }"
+                  :to="{ name: 'home' }"
+                >Global Feed</nuxt-link>
+              </li>
+              <li class="nav-item" v-show="tag">
+                <nuxt-link
+                  class="nav-link"
+                  :class="{ active: tab === 'tag' }"
+                  :to="{ name: 'home', query: { tab: 'tag', tag: tag } }"
+                >#{{tag}}</nuxt-link>
               </li>
             </ul>
           </div>
@@ -34,7 +49,11 @@
                 >{{ item.author.username }}</nuxt-link>
                 <span class="date">{{ item.createdAt }}</span>
               </div>
-              <button class="btn btn-outline-primary btn-sm pull-xs-right">
+              <button
+                @click="toggleFavourite(item)"
+                class="btn btn-sm pull-xs-right"
+                :class="item.favorited ? 'btn-primary' : 'btn-outline-primary'"
+              >
                 <i class="ion-heart"></i>
                 {{ item.favoritesCount }}
               </button>
@@ -66,7 +85,9 @@
                   :to="{
                     name: 'home',
                     query: {
-                      page: item
+                      page: item,
+                      tag,
+                      tab
                     }
                   }"
                   class="page-link ng-binding"
@@ -96,28 +117,42 @@
 </template>
 
 <script>
-import { getArticles, getTags } from '@/api/articles'
+import { mapState } from 'vuex'
+import {
+  getArticles,
+  getFeedArticles,
+  getTags,
+  articleFav,
+  articleUnFav
+} from '@/api/articles'
 export default {
   name: 'HomeIndex',
-  async asyncData ({ query }) {
+  async asyncData({ query }) {
+    /**
+     * tab 文章列表的分裂
+     * tag 标签文字
+     */
     const page = Number.parseInt(query.page || 1)
     const limit = 20
-    const tab = query.tab || 'global_feed'
-    const tag = query.tag
+    let { tag, tab } = query
+
+    tab = tab || 'global_feed'
+    tag && (tab = 'tag')
 
     // 文章的加载
-    const loadArticles = tab === 'global_feed'
-      ? getArticles
-      : getYourFeedArticles    
-
     const [articleRes, tagRes] = await Promise.all([
-      loadArticles({
-        limit,
-        offset: (page - 1) * limit,
-        tag
-      }),
+      tab === 'your_feed'
+        ? getFeedArticles({
+            limit,
+            offset: (page - 1) * limit
+          })
+        : getArticles({
+            limit,
+            offset: (page - 1) * limit,
+            tag
+          }),
       getTags()
-    ]) 
+    ])
 
     const { articles, articlesCount } = articleRes
     const { tags } = tagRes
@@ -127,29 +162,33 @@ export default {
       articlesCount,
       page,
       limit,
-      tags
+      tags,
+      tag,
+      tab
     }
   },
   data() {
     return {
-      articles: [],
-      articlesCount: 1,
-      loading: false,
-      tags: [],
-      params: {
-        offset: 0,
-        limit: 20
-      }
+      loading: false
     }
   },
   computed: {
-    totalPage () {
+    ...mapState(['userData']),
+    totalPage() {
       return Math.ceil(this.articlesCount / this.limit)
     }
   },
-  watchQuery: ['page'],
+  watchQuery: ['page', 'tag', 'tab'],
   methods: {
+    async toggleFavourite(data) {
+      const { article } = await (data.favorited
+        ? articleUnFav(data.slug)
+        : articleFav(data.slug))
+
+      data.favorited = article.favorited
+      data.favoritesCount = article.favoritesCount
+    }
   },
-  created() { }
+  created() {}
 }
 </script>

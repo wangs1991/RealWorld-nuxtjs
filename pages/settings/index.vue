@@ -82,8 +82,9 @@ export default {
   methods: {
     ...mapMutations(['storeUserData']),
     logout () {
-      // 清空本地的 token 定向到首页
-      Cookie.remove('user')
+      // 清空本地的 token, store状态 定向到首页
+      this.storeUserData(null)
+      Cookie.remove('user');
       this.$router.replace({ name: 'home' })
     },
     // 更新用户信息
@@ -93,6 +94,7 @@ export default {
         const res = await update({
           user: this.userData
         })
+        console.log(res)
         this.loading = false
 
         this.storeUserData(res.user)

@@ -4,13 +4,27 @@
       <div class="container">
         <div class="row">
           <div class="col-xs-12 col-md-10 offset-md-1">
-            <img src="http://i.imgur.com/Qr71crq.jpg" class="user-img" />
+            <img :src="image" class="user-img" />
             <h4>{{username}}</h4>
             <p>{{bio}}</p>
-            <button class="btn btn-sm btn-outline-secondary action-btn">
+            <nuxt-link
+              v-if="userData.username === username"
+              class="btn btn-sm btn-outline-secondary action-btn"
+              :to="{name: 'setting'}"
+            >
+              <i class="ion-gear-a"></i> Edit Profile Settings
+            </nuxt-link>
+            <button
+              v-else
+              class="btn btn-sm action-btn"
+              :class="following ? 'btn-secondary' : 'btn-outline-secondary'"
+              :disabled="followTag"
+              @click="toggleFollow"
+            >
               <i class="ion-plus-round"></i>
+              {{ following ? 'Unfollow' : 'Follow' }}
               &nbsp;
-              Follow Eric Simons
+              {{username}}
             </button>
           </div>
         </div>
@@ -24,7 +38,8 @@
             <ul class="nav nav-pills outline-active">
               <li class="nav-item">
                 <nuxt-link
-                  class="nav-link active"
+                  class="nav-link"
+                  :class="{active: type === 'my'}"
                   :to="{
                     name: 'profile',
                     params: { name: username },
@@ -34,7 +49,8 @@
               </li>
               <li class="nav-item">
                 <nuxt-link
-                  class="nav-link active"
+                  class="nav-link"
+                  :class="{active: type === 'feed'}"
                   :to="{
                     name: 'profile',
                     params: { name: username },
@@ -45,49 +61,66 @@
             </ul>
           </div>
 
-          <div class="article-preview">
+          <!-- 文章元素 -->
+          <div class="article-preview" v-for="item in articles" :key="item.slug">
             <div class="article-meta">
-              <a href>
-                <img src="http://i.imgur.com/Qr71crq.jpg" />
-              </a>
+              <nuxt-link :to="{ name: 'profile', params: { name: item.author.username } }">
+                <img :src="item.author.image" />
+              </nuxt-link>
               <div class="info">
-                <a href class="author">Eric Simons</a>
-                <span class="date">January 20th</span>
+                <nuxt-link
+                  class="author"
+                  :to="{ name: 'profile', params: { name: item.author.username } }"
+                >{{ item.author.username }}</nuxt-link>
+                <span class="date">{{ item.createdAt }}</span>
               </div>
-              <button class="btn btn-outline-primary btn-sm pull-xs-right">
-                <i class="ion-heart"></i> 29
+              <button
+                @click="toggleFavourite(item)"
+                class="btn btn-sm pull-xs-right"
+                :class="item.favorited ? 'btn-primary' : 'btn-outline-primary'"
+              >
+                <i class="ion-heart"></i>
+                {{ item.favoritesCount }}
               </button>
             </div>
-            <a href class="preview-link">
-              <h1>How to build webapps that scale</h1>
-              <p>This is the description for the post.</p>
+            <nuxt-link :to="{ name: 'article', params: { id: item.slug } }" class="preview-link">
+              <h1>{{ item.title }}</h1>
+              <p>{{ item.description }}</p>
               <span>Read more...</span>
-            </a>
+            </nuxt-link>
           </div>
 
-          <div class="article-preview">
-            <div class="article-meta">
-              <a href>
-                <img src="http://i.imgur.com/N4VcUeJ.jpg" />
-              </a>
-              <div class="info">
-                <a href class="author">Albert Pai</a>
-                <span class="date">January 20th</span>
-              </div>
-              <button class="btn btn-outline-primary btn-sm pull-xs-right">
-                <i class="ion-heart"></i> 32
-              </button>
-            </div>
-            <a href class="preview-link">
-              <h1>The song you won't ever stop singing. No matter how hard you try.</h1>
-              <p>This is the description for the post.</p>
-              <span>Read more...</span>
-              <ul class="tag-list">
-                <li class="tag-default tag-pill tag-outline">Music</li>
-                <li class="tag-default tag-pill tag-outline">Song</li>
-              </ul>
-            </a>
-          </div>
+          <!-- 加载中提示 -->
+          <div class="article-preview" v-show="loading">Loading articles...</div>
+
+          <!-- 空列表提示 -->
+          <div class="article-preview" v-show="articles.length < 1">No articles are here... yet.</div>
+
+          <!-- 分页 -->
+          <nav>
+            <ul class="pagination">
+              <li
+                class="page-item"
+                v-for="item in totalPage"
+                :key="item"
+                :class="{ active: item === page }"
+              >
+                <nuxt-link
+                  :to="{
+                    name: 'profile',
+                    params: {
+                      name: username
+                    },
+                    query: {
+                      page: item,
+                      type
+                    }
+                  }"
+                  class="page-link ng-binding"
+                >{{item}}</nuxt-link>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
@@ -95,31 +128,80 @@
 </template>
 
 <script>
-import { getProfile } from '@/api/user'
-import { getArticles } from '@/api/articles'
+import { mapState } from 'vuex'
+import { getProfile, followUser, unFollowUser } from '@/api/user'
+import { getArticles, articleFav, articleUnFav } from '@/api/articles'
 
 export default {
   name: 'UserProfile',
   async asyncData({ params, query }) {
     const { name } = params
-    const { type } = query
+    let { type, page } = query
     const search = {}
+    let articles
+    let articlesCount
+    let profile
+    const limit = 20
+
+    type = type || 'my'
+    page = page || 1
     // 拼接文章接口的参数
+    search.limit = limit
+    search.offset = (page - 1) * limit
     if (type === 'feed') {
       search.favorited = name
     }
 
     try {
-      const [{ artilces }, { profile }] = await Promise.all([
+      const [articleRes, profileRes] = await Promise.all([
         getArticles(search),
         getProfile(name)
       ])
-      console.log(artilces, profile)
-      return {
-        artilces,
-        ...profile
-      }
+      articles = articleRes.articles
+      articlesCount = articleRes.articlesCount
+      profile = profileRes.profile
     } catch (e) {}
+
+    return {
+      loading: false,
+      articlesCount,
+      articles,
+      ...profile,
+      followTag: false,
+      type,
+      limit,
+      page
+    }
+  },
+  computed: {
+    ...mapState(['userData']),
+    totalPage() {
+      return Math.ceil(this.articlesCount / this.limit)
+    }
+  },
+  watchQuery: ['type', 'page'],
+  methods: {
+    async toggleFollow() {
+      const request = this.following ? unFollowUser : followUser
+
+      try {
+        this.followTag = true
+        const { profile } = await request(this.username)
+        this.following = profile.following
+        this.followTag = false
+      } catch (e) {
+        alert(e.message || e.toString())
+        this.followTag = false
+      }
+    },
+    async toggleFavourite(data) {
+      const { article } = await (data.favorited
+        ? articleUnFav(data.slug)
+        : articleFav(data.slug))
+
+      data.favorited = article.favorited
+      data.favoritesCount = article.favoritesCount
+    }
   }
 }
 </script>

@@ -34,3 +34,19 @@ export const getProfile = username => {
     method: 'get'
   })
 }
+
+// 关注用户
+export const followUser = username => {
+  return request({
+    url: `/api/profiles/${username}/follow`,
+    method: 'post'
+  })
+}
+
+// 取消用户关注
+export const unFollowUser = username => {
+  return request({
+    url: `/api/profiles/${username}/follow`,
+    method: 'DELETE'
+  })
+}

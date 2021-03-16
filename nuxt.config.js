@@ -61,7 +61,8 @@ module.exports = {
   },
   plugins: [
     {src: '~/plugins/request.js', ssr: true},
-    {src: '~/plugins/validate.js', ssr: true}
+    {src: '~/plugins/validate.js', ssr: true},
+    {src: '~/filters/date.js', ssr: true}
   ],
   // nuxtjs默认忽略 node_modules文件夹下文件的编译，通过这个配置可以指定哪些文件被转化
   build: {
