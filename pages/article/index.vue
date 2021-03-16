@@ -19,7 +19,7 @@
           <button
             class="btn btn-sm"
             :class="author.following ? 'btn-secondary' : 'btn-outline-secondary'"
-            :disabled="followTag"
+            :disabled="followTag || !userData"
             @click="toggleFollow"
           >
             <i class="ion-plus-round"></i>
@@ -30,7 +30,7 @@
           <button
             class="btn btn-sm btn-outline-primary"
             :class="favorited ? 'btn-secondary' : 'btn-outline-secondary'"
-            :disabled="favTag"
+            :disabled="favTag || !userData"
             @click="toogleFav"
           >
             <i class="ion-heart"></i>
@@ -64,7 +64,7 @@
           <button
             class="btn btn-sm"
             :class="author.following ? 'btn-secondary' : 'btn-outline-secondary'"
-            :disabled="followTag"
+            :disabled="followTag || !userData"
             @click="toggleFollow"
           >
             <i class="ion-plus-round"></i>
@@ -75,7 +75,7 @@
           <button
             class="btn btn-sm btn-outline-primary"
             :class="favorited ? 'btn-secondary' : 'btn-outline-secondary'"
-            :disabled="favTag"
+            :disabled="favTag || !userData"
             @click="toogleFav"
           >
             <i class="ion-heart"></i>

@@ -51,6 +51,7 @@
               </div>
               <button
                 @click="toggleFavourite(item)"
+                :disabled="!userData"
                 class="btn btn-sm pull-xs-right"
                 :class="item.favorited ? 'btn-primary' : 'btn-outline-primary'"
               >

@@ -8,7 +8,7 @@
             <h4>{{username}}</h4>
             <p>{{bio}}</p>
             <nuxt-link
-              v-if="userData.username === username"
+              v-if="userData && userData.username === username"
               class="btn btn-sm btn-outline-secondary action-btn"
               :to="{name: 'setting'}"
             >
@@ -18,7 +18,7 @@
               v-else
               class="btn btn-sm action-btn"
               :class="following ? 'btn-secondary' : 'btn-outline-secondary'"
-              :disabled="followTag"
+              :disabled="followTag || !userData"
               @click="toggleFollow"
             >
               <i class="ion-plus-round"></i>
@@ -76,6 +76,7 @@
               </div>
               <button
                 @click="toggleFavourite(item)"
+                :disabled="!userData"
                 class="btn btn-sm pull-xs-right"
                 :class="item.favorited ? 'btn-primary' : 'btn-outline-primary'"
               >
