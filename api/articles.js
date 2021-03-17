@@ -35,6 +35,15 @@ export const publish = (data) => {
   })
 }
 
+// 更新文章
+export const update = (slug, data) => {
+  return request({
+    url: `/api/articles/${slug}`,
+    method: 'PUT',
+    data
+  })
+}
+
 // 更具slug 获取文章的详情
 export const getDetailBySlug = slug => {
   return request({
@@ -73,5 +82,13 @@ export const submitComment = (slug, data) => {
     url: `/api/articles/${slug}/comments`,
     method: 'post',
     data
+  })
+}
+
+// 删除文章
+export const deleteArticle = slug => {
+  return request({
+    url: `/api/articles/${slug}`,
+    method: 'DELETE'
   })
 }

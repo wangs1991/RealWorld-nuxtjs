@@ -16,28 +16,45 @@
             >{{ author.username }}</nuxt-link>
             <span class="date">{{ createdAt|dateFormat }}</span>
           </div>
-          <button
-            class="btn btn-sm"
-            :class="author.following ? 'btn-secondary' : 'btn-outline-secondary'"
-            :disabled="followTag || !userData"
-            @click="toggleFollow"
-          >
-            <i class="ion-plus-round"></i>
-            &nbsp;
-            {{author.following ? 'UnFollow' : 'Follow' }} {{ author.username }}
-          </button>
-          &nbsp;&nbsp;
-          <button
-            class="btn btn-sm btn-outline-primary"
-            :class="favorited ? 'btn-secondary' : 'btn-outline-secondary'"
-            :disabled="favTag || !userData"
-            @click="toogleFav"
-          >
-            <i class="ion-heart"></i>
-            &nbsp;
-            Favorite Post
-            <span class="counter">({{favoritesCount}})</span>
-          </button>
+          <!-- 当前用户显示的是文章的编辑和删除 -->
+          <template v-if="userData.username === author.username">
+            <nuxt-link
+              class="btn btn-outline-secondary btn-sm"
+              :to="{ name: 'edit', params: { id: slug } }"
+            >
+              <i class="ion-edit"></i> Edit Article
+            </nuxt-link>
+
+            <button class="btn btn-outline-danger btn-sm" @click="deleteArticle">
+              <i class="ion-trash-a"></i> Delete Article
+            </button>
+          </template>
+          <template v-else>
+            <button
+              class="btn btn-sm"
+              :class="author.following ? 'btn-secondary' : 'btn-outline-secondary'"
+              :disabled="followTag || !userData"
+              @click="toggleFollow"
+            >
+              <i class="ion-plus-round"></i>
+              &nbsp;
+              {{author.following ? 'UnFollow' : 'Follow' }} {{ author.username }}
+            </button>
+            &nbsp;&nbsp;
+            <button
+              class="btn btn-sm btn-outline-primary"
+              :class="favorited ? 'btn-secondary' : 'btn-outline-secondary'"
+              :disabled="favTag || !userData"
+              @click="toogleFav"
+            >
+              <i class="ion-heart"></i>
+              &nbsp;
+              Favorite Post
+              <span
+                class="counter"
+              >({{favoritesCount}})</span>
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -61,28 +78,45 @@
             >{{ author.username }}</nuxt-link>
             <span class="date">{{ createdAt|dateFormat }}</span>
           </div>
-          <button
-            class="btn btn-sm"
-            :class="author.following ? 'btn-secondary' : 'btn-outline-secondary'"
-            :disabled="followTag || !userData"
-            @click="toggleFollow"
-          >
-            <i class="ion-plus-round"></i>
-            &nbsp;
-            {{author.following ? 'UnFollow' : 'Follow' }} {{ author.username }}
-          </button>
-          &nbsp;&nbsp;
-          <button
-            class="btn btn-sm btn-outline-primary"
-            :class="favorited ? 'btn-secondary' : 'btn-outline-secondary'"
-            :disabled="favTag || !userData"
-            @click="toogleFav"
-          >
-            <i class="ion-heart"></i>
-            &nbsp;
-            Favorite Post
-            <span class="counter">({{favoritesCount}})</span>
-          </button>
+          <!-- 当前用户显示的是文章的编辑和删除 -->
+          <template v-if="userData.username === author.username">
+            <nuxt-link
+              class="btn btn-outline-secondary btn-sm"
+              :to="{ name: 'edit', params: { id: slug } }"
+            >
+              <i class="ion-edit"></i> Edit Article
+            </nuxt-link>
+
+            <button class="btn btn-outline-danger btn-sm" @click="deleteArticle">
+              <i class="ion-trash-a"></i> Delete Article
+            </button>
+          </template>
+          <template v-else>
+            <button
+              class="btn btn-sm"
+              :class="author.following ? 'btn-secondary' : 'btn-outline-secondary'"
+              :disabled="followTag || !userData"
+              @click="toggleFollow"
+            >
+              <i class="ion-plus-round"></i>
+              &nbsp;
+              {{author.following ? 'UnFollow' : 'Follow' }} {{ author.username }}
+            </button>
+            &nbsp;&nbsp;
+            <button
+              class="btn btn-sm btn-outline-primary"
+              :class="favorited ? 'btn-secondary' : 'btn-outline-secondary'"
+              :disabled="favTag || !userData"
+              @click="toogleFav"
+            >
+              <i class="ion-heart"></i>
+              &nbsp;
+              Favorite Post
+              <span
+                class="counter"
+              >({{favoritesCount}})</span>
+            </button>
+          </template>
         </div>
       </div>
 
@@ -154,7 +188,8 @@ import {
   articleFav,
   articleUnFav,
   getArticleComments,
-  submitComment
+  submitComment,
+  deleteArticle
 } from '@/api/articles'
 import { followUser, unFollowUser } from '@/api/user'
 import { mapState } from 'vuex'
@@ -222,6 +257,10 @@ export default {
         alert(e.message || e.toString())
         this.commentSubmitting = false
       }
+    },
+    async deleteArticle() {
+      await deleteArticle(this.slug)
+      this.$router.replace({ name: 'home', query: { tab: 'your_feed' } })
     }
   }
 }

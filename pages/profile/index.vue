@@ -72,7 +72,7 @@
                   class="author"
                   :to="{ name: 'profile', params: { name: item.author.username } }"
                 >{{ item.author.username }}</nuxt-link>
-                <span class="date">{{ item.createdAt }}</span>
+                <span class="date">{{ item.createdAt | dateFormat }}</span>
               </div>
               <button
                 @click="toggleFavourite(item)"
@@ -151,6 +151,8 @@ export default {
     search.offset = (page - 1) * limit
     if (type === 'feed') {
       search.favorited = name
+    } else {
+      search.author = name
     }
 
     try {

@@ -12,7 +12,8 @@
                       type="text"
                       class="form-control form-control-lg"
                       placeholder="Article Title"
-                      v-model="title"
+                      v-model="article.title"
+                      :disable="loading"
                     />
                     <span class="error-messages">{{ errors[0] }}</span>
                   </validation-provider>
@@ -23,7 +24,8 @@
                       type="text"
                       class="form-control"
                       placeholder="What's this article about?"
-                      v-model="description"
+                      v-model="article.description"
+                      :disable="loading"
                     />
                     <span class="error-messages">{{ errors[0] }}</span>
                   </validation-provider>
@@ -33,8 +35,9 @@
                     <textarea
                       class="form-control"
                       rows="8"
+                      :disable="loading"
                       placeholder="Write your article (in markdown)"
-                      v-model="body"
+                      v-model="article.body"
                     ></textarea>
                     <span class="error-messages">{{ errors[0] }}</span>
                   </validation-provider>
@@ -45,11 +48,12 @@
                     class="form-control"
                     placeholder="Enter tags"
                     v-model="tagInput"
+                    :disable="loading"
                     @keyup.enter.stop="inputTag"
                   />
                   <div class="tag-list">
                     <span
-                      v-for="(item, index) in tagList"
+                      v-for="(item, index) in article.tagList"
                       :key="index"
                       class="tag-default tag-pill"
                     >
@@ -58,10 +62,11 @@
                     </span>
                   </div>
                 </fieldset>
-                <div
+                <button
                   class="btn btn-lg pull-xs-right btn-primary"
+                  :disable="loading"
                   @click="handleSubmit(publish)"
-                >Publish Article</div>
+                >Publish Article</button>
               </fieldset>
             </form>
           </ValidationObserver>
@@ -72,40 +77,49 @@
 </template>
 
 <script>
-import { publish } from '@/api/articles/'
+import { publish, getDetailBySlug, update } from '@/api/articles'
 export default {
   name: 'Post',
-  data() {
-    return {
-      loading: false,
+  async asyncData({ params }) {
+    const { id } = params
+    let article = {
       title: '',
       description: '',
       body: '',
-      tagList: [],
-      tagInput: ''
+      tagList: []
+    }
+
+    if (id) {
+      const response = await getDetailBySlug(id)
+      article = response.article
+    }
+    return {
+      article,
+      loading: false,
+      tagInput: '',
+      id
     }
   },
   middleware: 'authenticated',
   methods: {
     inputTag() {
-      this.tagList.push(this.tagInput)
+      this.article.tagList.push(this.tagInput)
       this.tagInput = ''
     },
     removeTag(index) {
-      this.tagList.splice(index, 1)
+      this.article.tagList.splice(index, 1)
     },
     async publish() {
       try {
         this.loading = true
-        const { title, description, body, tagList } = this
-        const { article } = await publish({
-          article: {
-            title,
-            description,
-            body,
-            tagList
-          }
-        })
+
+        const { article } = this.id
+          ? await update(this.id, {
+              article: this.article
+            })
+          : await publish({
+              article: this.article
+            })
         // 跳转到文章详情页面
         this.$router.push({ name: 'article', params: { id: article.slug } })
         this.loading = false
