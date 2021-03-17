@@ -47,7 +47,7 @@
                   class="author"
                   :to="{ name: 'profile', params: { name: item.author.username } }"
                 >{{ item.author.username }}</nuxt-link>
-                <span class="date">{{ item.createdAt }}</span>
+                <span class="date">{{ item.createdAt | dateFormat }}</span>
               </div>
               <button
                 @click="toggleFavourite(item)"
